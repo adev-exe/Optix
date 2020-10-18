@@ -1,12 +1,25 @@
-import React, {Component, useState, useEffect } from 'react';
-import { Image, StyleSheet, Text, TouchableHighlight, View} from 'react-native';
-interface Screen {
+import React, {Component, useState } from 'react';
+import { Image, StyleSheet, Text, TouchableHighlight, TouchableOpacity, View} from 'react-native';
+import { Camera } from 'expo-camera';
+import { askAsync } from "expo-permissions";
 
+interface Screen {
+    playSound: boolean,
+    camera: boolean,
 }
 
 const styles = StyleSheet.create({
     wrapper: {
         backgroundColor: '#555',
+        height: '100%',
+        width: '100%',
+        display: 'flex',
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    wrapperInner: {
+        backgroundColor: 'transparent',
         height: '100%',
         width: '100%',
         display: 'flex',
@@ -32,6 +45,15 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         borderRadius: 360,
     },
+    backButton: {
+        width: '100%',
+        height: '10%',
+        backgroundColor: '#dd0000',
+        justifyContent: 'center',
+        alignItems: 'center',
+        position: 'absolute',
+        bottom: 0,
+    },
     buttonText: {
         textAlign: 'center',
         color: '#FFF',
@@ -41,43 +63,73 @@ const styles = StyleSheet.create({
 });
 
 export class Screen extends Component <{}, Screen> {
-    async ComponentDidMount() {
-        const { status } = await Camera.requestPermissionsAsync();
-
-        if (status !== "granted") {
-            throw new Error("No access to camera");
-        }
-        else {
-            console.log(status);
+    constructor(props : any) {
+        super(props);
+        this.state = {
+            playSound: false,
+            camera: false,
         }
     }
 
-    async componentWillUnmount() {
+    async componentDidMount() {
+        const { status } = await askAsync("camera");
+
+        if (status !== "granted") {
+            throw new Error("Camera permission not granted");
+        }
+    }
+
+    goBack() {
+        this.setState({camera : false});
+    }
+
+    goCamera() {
+        this.setState({camera : true});
     }
 
     render() {
         return(
             <View style={styles.wrapper}>
-                <TouchableHighlight
-                    style={styles.scanButton}
-                    //onPress={}
-                >
-                    <View>
-                        <Text style={styles.buttonText}>
-                            Scan
-                        </Text>
+                { this.state.camera === false &&
+                    <View style={styles.wrapperInner}>
+                        <TouchableHighlight
+                            style={styles.scanButton}
+                            onPress={() => this.goCamera()}
+                        >
+                            <View>
+                                <Text style={styles.buttonText}>
+                                    Scan
+                                </Text>
+                            </View>
+                        </TouchableHighlight>
+                        <TouchableHighlight
+                            style={styles.replayButton}
+                            //onPress={}
+                        >
+                            <View>
+                                <Text style={styles.buttonText}>
+                                    Replay
+                                </Text>
+                            </View>
+                        </TouchableHighlight>
                     </View>
-                </TouchableHighlight>
-                <TouchableHighlight
-                    style={styles.replayButton}
-                    //onPress={}
-                >
-                    <View>
-                        <Text style={styles.buttonText}>
-                            Replay
-                        </Text>
+                }
+                { this.state.camera === true &&
+                    <View style={styles.wrapperInner}>
+                        <Camera style={styles.wrapperInner}>
+                            <TouchableHighlight
+                                style={styles.backButton}
+                                onPress={() => this.goBack()}
+                            >
+                                <View>
+                                    <Text style={styles.buttonText}>
+                                        Back
+                                    </Text>
+                                </View>
+                            </TouchableHighlight>
+                        </Camera>
                     </View>
-                </TouchableHighlight>
+                }
             </View>
         );
     }
